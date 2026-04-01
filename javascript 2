@@ -1,0 +1,176 @@
+import React, { useState, useEffect } from 'react';
+import { FaChartLine, FaShoppingCart, FaChartBar } from 'react-icons/fa';
+import { Line } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+import './styles/Nexus.css';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+const mockStocks = [
+  { symbol: 'AAPL', name: 'Apple Inc.', price: 175.32, change: 2.5, owned: 0 },
+  { symbol: 'GOOGL', name: 'Google', price: 142.15, change: -0.8, owned: 0 },
+  { symbol: 'MSFT', name: 'Microsoft', price: 378.85, change: 1.2, owned: 0 },
+  { symbol: 'AMZN', name: 'Amazon', price: 145.20, change: -1.1, owned: 0 },
+];
+
+function StockPortfolio({ availableFunds = 0 }) {
+  const [stocks, setStocks] = useState(mockStocks);
+  const [portfolioValue, setPortfolioValue] = useState(0);
+  const [selectedStock, setSelectedStock] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [priceHistory, setPriceHistory] = useState([]);
+
+  useEffect(() => {
+    // Calculate total portfolio value
+    const total = stocks.reduce((sum, stock) => sum + (stock.price * stock.owned), 0);
+    setPortfolioValue(total);
+
+    // Generate mock price history
+    const history = [];
+    for (let i = 30; i >= 0; i--) {
+      history.push({
+        date: `Day ${i}`,
+        price: 100 + Math.random() * 50
+      });
+    }
+    setPriceHistory(history);
+  }, [stocks]);
+
+  const handleBuyStock = () => {
+    if (!selectedStock) return;
+    const cost = selectedStock.price * quantity;
+    
+    if (cost <= availableFunds) {
+      setStocks(stocks.map(stock => 
+        stock.symbol === selectedStock.symbol 
+          ? { ...stock, owned: stock.owned + quantity }
+          : stock
+      ));
+      alert(`✅ Bought ${quantity} shares of ${selectedStock.symbol}!`);
+      setQuantity(1);
+    } else {
+      alert(`❌ Insufficient funds! You need $${cost.toFixed(2)} but have $${availableFunds.toFixed(2)}`);
+    }
+  };
+
+  const chartData = {
+    labels: priceHistory.map(h => h.date),
+    datasets: [
+      {
+        label: 'Portfolio Value',
+        data: priceHistory.map((_, i) => portfolioValue * (0.95 + i * 0.01)),
+        borderColor: 'rgb(75, 192, 192)',
+        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+        tension: 0.4
+      }
+    ]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Portfolio Performance'
+      }
+    }
+  };
+
+  return (
+    <div className="card">
+      <h2 className="card-title">
+        <FaChartLine /> Virtual Stock Portfolio
+      </h2>
+      
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-value">${portfolioValue.toFixed(2)}</div>
+          <div>Portfolio Value</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-value">${availableFunds.toFixed(2)}</div>
+          <div>Available to Invest</div>
+        </div>
+      </div>
+
+      <div style={{ margin: '1rem 0' }}>
+        <Line data={chartData} options={chartOptions} />
+      </div>
+
+      <h3>Market Prices</h3>
+      {stocks.map(stock => (
+        <div key={stock.symbol} className="stock-item">
+          <div>
+            <div className="stock-symbol">{stock.symbol}</div>
+            <div style={{ fontSize: '0.9rem', color: '#666' }}>{stock.name}</div>
+            {stock.owned > 0 && (
+              <div style={{ fontSize: '0.8rem', color: '#4caf50' }}>
+                Owned: {stock.owned} shares
+              </div>
+            )}
+          </div>
+          <div>
+            <div className="stock-price">${stock.price.toFixed(2)}</div>
+            <div className={stock.change >= 0 ? 'stock-change positive' : 'stock-change negative'}>
+              {stock.change >= 0 ? '+' : ''}{stock.change}%
+            </div>
+            <button 
+              className="buy-btn"
+              onClick={() => setSelectedStock(stock)}
+            >
+              Buy
+            </button>
+          </div>
+        </div>
+      ))}
+
+      {selectedStock && (
+        <div className="modal" onClick={() => setSelectedStock(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Buy {selectedStock.symbol} Shares</h3>
+            <p>Price per share: ${selectedStock.price.toFixed(2)}</p>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+              min="1"
+              className="expense-input"
+              style={{ margin: '1rem 0' }}
+            />
+            <p>Total Cost: ${(selectedStock.price * quantity).toFixed(2)}</p>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button className="btn-primary" onClick={handleBuyStock}>
+                Confirm Purchase
+              </button>
+              <button onClick={() => setSelectedStock(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default StockPortfolio;
