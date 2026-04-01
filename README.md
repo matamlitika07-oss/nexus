@@ -1,2 +1,22 @@
-# nexus
-Description: A platform that tracks daily campus purchases, rounds up the  "spare change" digitally, and simulates investing it in real-world stocks, paired  with bite-sized financial literacy modules. 
+import React from 'react';
+import './styles/Nexus.css';
+
+function Navbar() {
+  return (
+    <nav className="navbar">
+      <div className="navbar-brand">
+        🎓 Nexus
+      </div>
+      <ul className="nav-links">
+        <li><a href="/">Dashboard</a></li>
+        <li><a href="/expenses">Expenses</a></li>
+        <li><a href="/stocks">Stocks</a></li>
+        <li><a href="/learn">Learn</a></li>
+        <li><a href="/challenges">Challenges</a></li>
+      </ul>
+    </nav>
+  );
+}
+
+export default Navbar;
+
